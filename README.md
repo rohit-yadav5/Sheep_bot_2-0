@@ -4,15 +4,6 @@ Sheep Bot is a sheep-themed AI document assistant that lets you upload PDFs and 
 
 ---
 
-## Live Demo
-
-> The hosted service is currently down due to server issues.
-
-- **Web App:** [wasserstoff-aiinterntask.vercel.app](https://wasserstoff-aiinterntask.vercel.app/)
-- **API Docs (Swagger):** [mahindra-bot.biup.ai/docs](https://mahindra-bot.biup.ai/docs#/)
-
----
-
 ## Demo Media
 
 | Type | Link |
