@@ -1,6 +1,16 @@
 # Sheep Bot
 
-Sheep Bot is a sheep-themed AI document assistant that lets you upload PDFs and images, then ask natural-language questions about them. It uses semantic search, KMeans clustering, and Google Gemini to return themed, paragraph-cited answers in a conversational chat interface.
+> An AI-powered document assistant — upload your files, ask questions in plain English, and get cited, theme-grouped answers in seconds.
+
+Sheep Bot extracts text from PDFs and images via OCR, indexes them with semantic embeddings, and uses Google Gemini to synthesize multi-document answers organized by theme — each one traceable back to the exact paragraph it came from.
+
+---
+
+## What It Does
+
+1. **Upload** a PDF or image — text is extracted automatically via Tesseract OCR.
+2. **Ask a question** in the chat interface.
+3. **Get a themed answer** — related chunks are clustered, summarized by Gemini, and returned with paragraph-level citations.
 
 ---
 
@@ -16,61 +26,17 @@ Sheep Bot is a sheep-themed AI document assistant that lets you upload PDFs and 
 
 ## Features
 
-- **Document Upload** — Upload PDFs and images (PNG/JPG) via the sidebar. Text is extracted automatically via OCR (Tesseract).
-- **Conversational Q&A** — Ask questions in plain English; Sheep Bot answers using only the content of your documents.
-- **Semantic Search** — Queries are matched to document chunks using `all-MiniLM-L6-v2` embeddings stored in ChromaDB.
-- **Theme Identification** — KMeans clustering groups related chunks into distinct themes, each answered separately by Gemini.
-- **Paragraph Citations** — Every theme answer references specific documents and paragraph numbers so answers are traceable.
-- **Sentiment Analysis** — Each uploaded document is scored with VADER sentiment on ingestion.
-- **Document Management** — View, download, and delete uploaded documents from the sidebar.
-- **Light / Dark Mode** — Persisted across sessions via `localStorage`, with automatic OS preference detection.
-- **Upload Progress Bar** — Real-time upload progress feedback.
-
----
-
-## Architecture
-
-```
-frontend/          React 19 single-page app (Create React App)
-backend/
-  app/
-    main.py        FastAPI application — all routes and business logic
-    models/
-      document.py  SQLAlchemy ORM model (Document table)
-    core/
-      database.py  SQLAlchemy engine + session factory (SQLite)
-  requirements.txt Python dependencies
-  Dockerfile       Container definition
-  init_db.py       One-time DB initialisation script
-data/
-  uploaded_files/  Persisted uploaded documents
-Procfile           Heroku/Railway process definition
-```
-
-### Request flow
-
-```
-User question
-    │
-    ▼
-React frontend  ──POST /query/──►  FastAPI backend
-                                        │
-                                   Encode question
-                                   (SentenceTransformer)
-                                        │
-                                   ChromaDB semantic search
-                                   (top-50 paragraph chunks)
-                                        │
-                                   KMeans clustering
-                                   (up to 5 themes)
-                                        │
-                                   Gemini 1.5 Flash
-                                   (theme summaries + citations)
-                                        │
-                                   Return themes + chunks
-                                        │
-    React renders chat bubble  ◄────────┘
-```
+| Feature | Detail |
+|---------|--------|
+| Document Upload | PDFs and images (PNG/JPG); OCR via Tesseract |
+| Conversational Q&A | Natural-language questions answered from your documents only |
+| Semantic Search | `all-MiniLM-L6-v2` embeddings matched in ChromaDB |
+| Theme Identification | KMeans clusters chunks into up to 5 themes per query |
+| Paragraph Citations | Every answer cites exact document and paragraph |
+| Sentiment Analysis | VADER sentiment scored on upload |
+| Document Management | View, download, delete from the sidebar |
+| Light / Dark Mode | OS-aware, persisted via `localStorage` |
+| Upload Progress | Real-time progress bar during upload |
 
 ---
 
@@ -84,10 +50,56 @@ React frontend  ──POST /query/──►  FastAPI backend
 | Embeddings | `sentence-transformers` — `all-MiniLM-L6-v2` |
 | Vector store | ChromaDB |
 | Clustering | scikit-learn KMeans |
-| LLM | Google Gemini 1.5 Flash (`google-generativeai`) |
+| LLM | Google Gemini 1.5 Flash |
 | Sentiment | NLTK VADER |
 | Database | SQLite via SQLAlchemy |
 | Containerisation | Docker |
+
+---
+
+## Architecture
+
+### Project layout
+
+```
+frontend/            React 19 SPA (Create React App)
+backend/
+  app/
+    main.py          FastAPI app — all routes and business logic
+    models/
+      document.py    SQLAlchemy ORM model
+    core/
+      database.py    Engine + session factory (SQLite)
+  requirements.txt
+  Dockerfile
+  init_db.py         One-time DB init script
+data/
+  uploaded_files/    Persisted uploaded documents
+Procfile             Process definition (Heroku / Railway)
+```
+
+### Request flow
+
+```
+User question
+    │
+    ▼
+React frontend  ──POST /query/──►  FastAPI
+                                       │
+                                  Encode question
+                                  (SentenceTransformer)
+                                       │
+                                  ChromaDB semantic search
+                                  (top-50 paragraph chunks)
+                                       │
+                                  KMeans clustering
+                                  (up to 5 themes)
+                                       │
+                                  Gemini 1.5 Flash
+                                  (theme summaries + citations)
+                                       │
+    React renders chat bubble  ◄───────┘
+```
 
 ---
 
@@ -97,31 +109,26 @@ React frontend  ──POST /query/──►  FastAPI backend
 
 - Python 3.10+
 - Node.js 18+
-- Tesseract OCR installed on your system (`brew install tesseract` / `apt install tesseract-ocr`)
-- Poppler for PDF conversion (`brew install poppler` / `apt install poppler-utils`)
-- A Google Gemini API key
+- Tesseract OCR — `brew install tesseract` / `apt install tesseract-ocr`
+- Poppler (PDF rendering) — `brew install poppler` / `apt install poppler-utils`
+- A [Google Gemini API key](https://aistudio.google.com/app/apikey)
 
 ### Backend
 
 ```bash
 cd backend
 
-# Create and activate a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+source .venv/bin/activate       # Windows: .venv\Scripts\activate
 
-# Install dependencies
 pip install -r requirements.txt
 
-# Set environment variables
 echo "GOOGLE_API_KEY=your_key_here" > .env
 
-# Run
 uvicorn app.main:app --reload --port 8000
 ```
 
-The API will be available at `http://localhost:8000`.
-Interactive docs: `http://localhost:8000/docs`
+API available at `http://localhost:8000` — interactive docs at `http://localhost:8000/docs`.
 
 ### Frontend
 
@@ -131,10 +138,9 @@ npm install
 npm start
 ```
 
-The app will open at `http://localhost:3000`.
+App opens at `http://localhost:3000`.
 
-> By default, the frontend points to the hosted backend (`https://mahindra-bot.biup.ai`).
-> To use your local backend, change `API_BASE` in `frontend/src/App.js`:
+> To point the frontend at your local backend, update `API_BASE` in `frontend/src/App.js`:
 > ```js
 > const API_BASE = "http://localhost:8000";
 > ```
@@ -155,18 +161,17 @@ docker run -p 8000:8000 -e GOOGLE_API_KEY=your_key_here sheep-bot-backend
 |--------|----------|-------------|
 | `GET` | `/` | Health check |
 | `GET` | `/health` | Health check |
-| `POST` | `/upload/` | Upload one or more files (PDF/PNG/JPG) |
+| `POST` | `/upload/` | Upload one or more files |
 | `GET` | `/documents/` | List all documents |
-| `GET` | `/documents/{id}` | Get document details + extracted text |
+| `GET` | `/documents/{id}` | Get document details and extracted text |
 | `DELETE` | `/documents/{id}` | Delete a document |
 | `GET` | `/documents/{id}/download` | Download the original file |
 | `POST` | `/query/` | Query documents with a natural-language question |
 
 ### POST `/upload/`
 
-Multipart form — field name: `files` (supports multiple files).
+Multipart form, field name `files` (multiple files supported).
 
-**Response:**
 ```json
 {
   "results": [
@@ -182,14 +187,17 @@ Multipart form — field name: `files` (supports multiple files).
 
 ### POST `/query/`
 
+Request:
 ```json
 {
   "question": "What are the key findings?",
-  "selected_doc_ids": [1, 2]   // optional — omit to search all documents
+  "selected_doc_ids": [1, 2]
 }
 ```
 
-**Response:**
+`selected_doc_ids` is optional — omit it to search across all documents.
+
+Response:
 ```json
 {
   "answer": "Identified Themes:\n\nTheme 1: ...",
@@ -206,27 +214,18 @@ Multipart form — field name: `files` (supports multiple files).
 
 ---
 
-## Project Structure Notes
+## Notes
 
-- `data/uploaded_files/` — uploaded files are stored here; not committed to git.
-- `chroma_db/` — ChromaDB persistence directory; auto-created on first upload.
-- `data/documents.db` — SQLite database; auto-created on startup.
-- The backend uses lazy initialisation for the sentence transformer model and ChromaDB client to keep startup time low.
-
----
-
-## Known Limitations
-
-- Hosted service is currently offline due to infrastructure constraints.
-- OCR quality depends on Tesseract and document scan quality; complex layouts may reduce accuracy.
-- `allow_origins=["*"]` in CORS is suitable for development only — restrict to your frontend domain in production.
-- ChromaDB is in-process and file-backed; replace with a hosted vector DB for production scale.
+- `data/uploaded_files/` and `chroma_db/` are auto-created and not committed to git.
+- The sentence transformer model and ChromaDB client are lazily initialised to keep startup fast.
+- `allow_origins=["*"]` is fine for development — restrict to your frontend domain in production.
+- ChromaDB is file-backed and single-process; swap it for a hosted vector DB at production scale.
 
 ---
 
 ## Developer Notes
 
-Building Sheep Bot was a challenging and rewarding full-stack project. Integrating NLP, vector search, LLM generation, and OCR into a single coherent pipeline involved significant learning across each layer. The biggest hurdle was deployment — many suggested platforms had resource limits incompatible with model loading. With external help, the project was hosted on a custom domain and confirmed stable. This project reinforced a lot of practical knowledge around API design, asynchronous Python, and cloud deployment.
+Building Sheep Bot involved stitching together OCR, semantic search, vector storage, clustering, and LLM generation into one coherent pipeline — each layer with its own learning curve. Deployment was the hardest part: most suggested platforms had memory limits incompatible with model loading. With outside help, the project was hosted on a custom domain and confirmed stable. The experience sharpened practical skills across API design, asynchronous Python, and cloud deployment.
 
 ---
 
