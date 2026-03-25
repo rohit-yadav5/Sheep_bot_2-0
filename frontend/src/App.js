@@ -382,7 +382,7 @@ function App() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="What are your query?"
+            placeholder="Ask anything about your documents..."
           />
           <button type="submit">Ask</button>
         </form>
